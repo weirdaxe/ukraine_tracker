@@ -1,58 +1,103 @@
 import streamlit as st
 from playwright.sync_api import sync_playwright
-import os
 
 def scrape_and_screenshot():
-    screenshot_path = "/tmp/chart_screenshot.png"
+    screenshot_path = "chart_screenshot.png"
     with sync_playwright() as p:
-        browser = p.chromium.launch(
-            headless=True,
-            args=["--no-sandbox", "--disable-dev-shm-usage"]
-        )
+        browser = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage"])
         page = browser.new_page()
         url = "https://www.nzz.ch/english/ukraine-war-interactive-map-on-a-big-scale-ld.1748451"
         page.goto(url)
 
-        # Accept cookies by clicking the button
+        # Accept cookies
         try:
             page.click('#cmpwelcomebtnyes a', timeout=5000)
         except:
             pass
 
-        # Wait up to 60 seconds for #chart to appear
         page.wait_for_selector("#chart", timeout=60000)
 
         chart_div = page.query_selector("#chart")
         if not chart_div:
             browser.close()
             return None, "Div with id 'chart' not found."
-        
+
         chart_div.screenshot(path=screenshot_path)
         browser.close()
     return screenshot_path, None
 
-
-
 def main():
-    st.title("Ukraine War Tracker - Div Screenshot Scraper")
+    st.title("Ukraine War Interactive Map Scraper")
 
-    if st.button("🔍 Scrape and Download Chart Screenshot"):
-        with st.spinner("Scraping and capturing the div..."):
+    if st.button("🔍 Scrape and Show Chart"):
+        with st.spinner("Scraping and capturing chart..."):
             image_path, error = scrape_and_screenshot()
             if error:
                 st.error(error)
             else:
-                st.image(image_path)
-                with open(image_path, "rb") as f:
-                    btn = st.download_button(
-                        label="Download Screenshot",
-                        data=f,
-                        file_name="chart_screenshot.png",
-                        mime="image/png"
-                    )
+                st.success("Screenshot captured!")
+                st.image(image_path)  # Display the scraped image here
+                st.download_button("Download Screenshot", open(image_path, "rb").read(), file_name="chart.png")
 
 if __name__ == "__main__":
     main()
+
+
+# import streamlit as st
+# from playwright.sync_api import sync_playwright
+# import os
+
+# def scrape_and_screenshot():
+#     screenshot_path = "/tmp/chart_screenshot.png"
+#     with sync_playwright() as p:
+#         browser = p.chromium.launch(
+#             headless=True,
+#             args=["--no-sandbox", "--disable-dev-shm-usage"]
+#         )
+#         page = browser.new_page()
+#         url = "https://www.nzz.ch/english/ukraine-war-interactive-map-on-a-big-scale-ld.1748451"
+#         page.goto(url)
+
+#         # Accept cookies by clicking the button
+#         try:
+#             page.click('#cmpwelcomebtnyes a', timeout=5000)
+#         except:
+#             pass
+
+#         # Wait up to 60 seconds for #chart to appear
+#         page.wait_for_selector("#chart", timeout=60000)
+
+#         chart_div = page.query_selector("#chart")
+#         if not chart_div:
+#             browser.close()
+#             return None, "Div with id 'chart' not found."
+        
+#         chart_div.screenshot(path=screenshot_path)
+#         browser.close()
+#     return screenshot_path, None
+
+
+
+# def main():
+#     st.title("Ukraine War Tracker - Div Screenshot Scraper")
+
+#     if st.button("🔍 Scrape and Download Chart Screenshot"):
+#         with st.spinner("Scraping and capturing the div..."):
+#             image_path, error = scrape_and_screenshot()
+#             if error:
+#                 st.error(error)
+#             else:
+#                 st.image(image_path)
+#                 with open(image_path, "rb") as f:
+#                     btn = st.download_button(
+#                         label="Download Screenshot",
+#                         data=f,
+#                         file_name="chart_screenshot.png",
+#                         mime="image/png"
+#                     )
+
+# if __name__ == "__main__":
+#     main()
 
 
     
