@@ -1,40 +1,51 @@
 import streamlit as st
 from playwright.sync_api import sync_playwright
+import os
 
 def scrape_and_screenshot():
+    screenshot_path = "/tmp/chart_screenshot.png"
     with sync_playwright() as p:
         browser = p.chromium.launch(
             headless=True,
             args=["--no-sandbox", "--disable-dev-shm-usage"]
         )
         page = browser.new_page()
-        page.goto("https://www.nzz.ch/english/ukraine-war-interactive-map-on-a-big-scale-ld.1748451")
-        page.wait_for_selector("canvas")
-        canvas = page.query_selector("canvas")
-        if canvas:
-            screenshot_path = "/tmp/chart_screenshot.png"
-            canvas.screenshot(path=screenshot_path)
+        url = "https://www.nzz.ch/english/ukraine-war-interactive-map-on-a-big-scale-ld.1748451"
+        page.goto(url)
+        # Wait for the div to load
+        page.wait_for_selector("#chart")
+        # Get the element handle for the div
+        chart_div = page.query_selector("#chart")
+        if not chart_div:
             browser.close()
-            return screenshot_path, None
-        else:
-            browser.close()
-            return None, "No canvas element found inside iframe."
+            return None, "Div with id 'chart' not found."
+        # Take screenshot of the div itself
+        chart_div.screenshot(path=screenshot_path)
+        browser.close()
+    return screenshot_path, None
+
 
 def main():
-    st.title("Ukraine War Tracker - Screenshot Scraper")
+    st.title("Ukraine War Tracker - Div Screenshot Scraper")
 
     if st.button("🔍 Scrape and Download Chart Screenshot"):
-        with st.spinner("Scraping and capturing chart..."):
+        with st.spinner("Scraping and capturing the div..."):
             image_path, error = scrape_and_screenshot()
             if error:
-                st.error(f"Error: {error}")
+                st.error(error)
             else:
-                st.success("Screenshot saved!")
                 st.image(image_path)
-                st.download_button("Download Screenshot", open(image_path, "rb").read(), file_name="chart_screenshot.png")
+                with open(image_path, "rb") as f:
+                    btn = st.download_button(
+                        label="Download Screenshot",
+                        data=f,
+                        file_name="chart_screenshot.png",
+                        mime="image/png"
+                    )
 
 if __name__ == "__main__":
     main()
+
 
     
 # import streamlit as st
