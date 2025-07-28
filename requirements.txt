@@ -2,3 +2,4 @@ streamlit==1.35.0
 selenium==4.21.0
 pillow
 webdriver-manager
+playwright
