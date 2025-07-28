@@ -1,6 +1,19 @@
 import streamlit as st
 from playwright.sync_api import sync_playwright
+import subprocess
 import os
+
+def install_playwright_browsers():
+    # Check if browsers are already installed (by presence of cache folder)
+    cache_path = os.path.expanduser("~/.cache/ms-playwright")
+    if not os.path.exists(cache_path):
+        st.info("Installing Playwright browsers. This may take a moment...")
+        try:
+            subprocess.run(["playwright", "install", "--with-deps"], check=True)
+        except Exception as e:
+            st.error(f"Error installing Playwright browsers: {e}")
+
+install_playwright_browsers()
 
 def scrape_and_screenshot():
     screenshot_path = "chart_screenshot.png"
@@ -10,9 +23,8 @@ def scrape_and_screenshot():
             page = browser.new_page()
             url = "https://www.nzz.ch/english/ukraine-war-interactive-map-of-the-current-front-line-ld.1688087"
             page.goto(url)
-            page.wait_for_timeout(10000)  # Wait 10 seconds for the iframe and chart to load
+            page.wait_for_timeout(10000)  # Wait 10 seconds for iframe/chart to load
 
-            # Locate the iframe containing the map/chart
             iframe_element = page.query_selector("iframe")
             if not iframe_element:
                 browser.close()
@@ -23,11 +35,7 @@ def scrape_and_screenshot():
                 browser.close()
                 return None, "Could not access iframe content."
 
-            # Wait for the chart element inside iframe (usually a canvas)
-            # Adjust selector if needed
             frame.wait_for_selector("canvas", timeout=10000)
-
-            # Take a screenshot of the canvas inside the iframe
             canvas = frame.query_selector("canvas")
             if not canvas:
                 browser.close()
@@ -41,10 +49,7 @@ def scrape_and_screenshot():
 
 def main():
     st.title("Ukraine War Front Line Map Scraper")
-
-    st.markdown("""
-    This app scrapes the iframe chart from the NZZ Ukraine War interactive map and lets you download it as an image.
-    """)
+    st.markdown("Scrape the iframe chart and download it as an image.")
 
     if st.button("🔍 Scrape and Download Chart Screenshot"):
         with st.spinner("Scraping and capturing chart... Please wait up to 10 seconds."):
@@ -62,10 +67,10 @@ def main():
                     file_name="ukraine_war_frontline.png",
                     mime="image/png"
                 )
-            # Optionally delete the file after download or keep for session
 
 if __name__ == "__main__":
     main()
+
 
 
 # import streamlit as st
