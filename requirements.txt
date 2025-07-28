@@ -3,3 +3,4 @@ selenium==4.21.0
 pillow
 webdriver-manager
 playwright
+pyppeteer
