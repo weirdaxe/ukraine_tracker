@@ -4,12 +4,12 @@ import subprocess
 import os
 
 def install_playwright_browsers():
-    # Check if browsers are already installed (by presence of cache folder)
     cache_path = os.path.expanduser("~/.cache/ms-playwright")
     if not os.path.exists(cache_path):
         st.info("Installing Playwright browsers. This may take a moment...")
         try:
-            subprocess.run(["playwright", "install", "--with-deps"], check=True)
+            # Run playwright install WITHOUT --with-deps to avoid sudo
+            subprocess.run(["playwright", "install"], check=True)
         except Exception as e:
             st.error(f"Error installing Playwright browsers: {e}")
 
