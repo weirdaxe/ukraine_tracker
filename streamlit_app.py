@@ -1,46 +1,67 @@
-import streamlit as st
+# import streamlit as st
 from playwright.sync_api import sync_playwright
 
-def scrape_and_screenshot():
-    screenshot_path = "chart_screenshot.png"
+def scrape_and_get_html():
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage"])
+        browser = p.chromium.launch(headless=True)
         page = browser.new_page()
-        url = "https://www.nzz.ch/english/ukraine-war-interactive-map-on-a-big-scale-ld.1748451"
-        page.goto(url)
-
-        # Accept cookies
+        page.goto("https://www.nzz.ch/english/ukraine-war-interactive-map-on-a-big-scale-ld.1748451", timeout=60000)
+        
+        # Try to click the cookie accept button if present
         try:
             page.click('#cmpwelcomebtnyes a', timeout=5000)
-        except:
+        except Exception:
             pass
-
+        
+        # Wait for the #chart element with increased timeout
         page.wait_for_selector("#chart", timeout=60000)
-
-        chart_div = page.query_selector("#chart")
-        if not chart_div:
-            browser.close()
-            return None, "Div with id 'chart' not found."
-
-        chart_div.screenshot(path=screenshot_path)
+        
+        # Get the outer HTML of the #chart element
+        chart_html = page.eval_on_selector("#chart", "el => el.outerHTML")
+        
         browser.close()
-    return screenshot_path, None
+        return chart_html
+
+def scrape_and_screenshot_fullpage():
+    screenshot_path = "fullpage.png"
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto("https://www.nzz.ch/english/ukraine-war-interactive-map-on-a-big-scale-ld.1748451", timeout=60000)
+        
+        # Accept cookies if possible
+        try:
+            page.click('#cmpwelcomebtnyes a', timeout=5000)
+        except Exception:
+            pass
+        
+        page.screenshot(path=screenshot_path, full_page=True)
+        browser.close()
+        return screenshot_path
 
 def main():
-    st.title("Ukraine War Interactive Map Scraper")
+    st.title("Ukraine Tracker Debugging")
 
-    if st.button("🔍 Scrape and Show Chart"):
-        with st.spinner("Scraping and capturing chart..."):
-            image_path, error = scrape_and_screenshot()
-            if error:
-                st.error(error)
-            else:
-                st.success("Screenshot captured!")
-                st.image(image_path)  # Display the scraped image here
-                st.download_button("Download Screenshot", open(image_path, "rb").read(), file_name="chart.png")
+    if st.button("Show #chart HTML content"):
+        with st.spinner("Scraping #chart HTML..."):
+            try:
+                html_content = scrape_and_get_html()
+                st.markdown("### Scraped #chart HTML:")
+                st.code(html_content, language='html')
+            except Exception as e:
+                st.error(f"Error scraping HTML: {e}")
+
+    if st.button("Show Full Page Screenshot"):
+        with st.spinner("Taking full page screenshot..."):
+            try:
+                screenshot_path = scrape_and_screenshot_fullpage()
+                st.image(screenshot_path)
+            except Exception as e:
+                st.error(f"Error taking screenshot: {e}")
 
 if __name__ == "__main__":
     main()
+
 
 
 # import streamlit as st
