@@ -12,17 +12,25 @@ def scrape_and_screenshot():
         page = browser.new_page()
         url = "https://www.nzz.ch/english/ukraine-war-interactive-map-on-a-big-scale-ld.1748451"
         page.goto(url)
-        # Wait for the div to load
-        page.wait_for_selector("#chart")
-        # Get the element handle for the div
+
+        # Accept cookies by clicking the button
+        try:
+            page.click('#cmpwelcomebtnyes a', timeout=5000)
+        except:
+            pass
+
+        # Wait up to 60 seconds for #chart to appear
+        page.wait_for_selector("#chart", timeout=60000)
+
         chart_div = page.query_selector("#chart")
         if not chart_div:
             browser.close()
             return None, "Div with id 'chart' not found."
-        # Take screenshot of the div itself
+        
         chart_div.screenshot(path=screenshot_path)
         browser.close()
     return screenshot_path, None
+
 
 
 def main():
